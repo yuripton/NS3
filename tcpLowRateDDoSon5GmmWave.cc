@@ -3,7 +3,7 @@
  * n0 -> arini (UE legitimate User)
  * n1 -> endro (4 UE attackers)
  * n2 -> enb (base station connected to yuri)
- * n3 -> bob (receiver)
+ * n3 -> yuri (receiver)
      n0
         \ pp1 
          \
@@ -29,7 +29,7 @@
 //Main function
 int main (int argc, char *argv[])
 {
-  
+
   Simulator::Run();
   Simulator::Destroy();
   return 0;
