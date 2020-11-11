@@ -176,6 +176,7 @@ int main (int argc, char *argv[])
     TCPSinkApp.Stop(Seconds(MAX_SIMULATION_TIME));
     pp1.EnablePcapAll("pcap1");
     pp2.EnablePcapAll("pcap2");
+  Simulator::Stop (Seconds (MAX_SIMULATION_TIME));
   Simulator::Run();
   Simulator::Destroy();
   return 0;
