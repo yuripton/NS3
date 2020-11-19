@@ -131,14 +131,14 @@ int main (int argc, char *argv[])
     pp1.SetDeviceAttribute("DataRate", StringValue("10Gbps"));
     pp1.SetChannelAttribute("Delay", StringValue("5ms"));
 
-    pp2.SetDeviceAttribute("DataRate", StringValue("10Gbps"));
-    pp2.SetChannelAttribute("Delay", StringValue("5ms"));
+    // pp2.SetDeviceAttribute("DataRate", StringValue("10Gbps"));
+    // pp2.SetChannelAttribute("Delay", StringValue("5ms"));
 
 
     // Install the Point-To-Point Connections between Nodes
     NetDeviceContainer clientServerDevs, botServerDevs;
     clientServerDevs = pp1.Install(clientServerNodes);
-    botServerDevs = pp2.Install(botNodes.Get(0), clientServerNodes.Get(1));
+    botServerDevs = pp1.Install(botNodes.Get(0), clientServerNodes.Get(1));
 
     // for (int i = 0; i < NUMBER_OF_BOTS; ++i)
     // {
@@ -155,7 +155,7 @@ int main (int argc, char *argv[])
   ipv4.SetBase ("10.10.1.0", "255.255.255.0");
   Ipv4InterfaceContainer iface1 = ipv4.Assign (clientServerDevs);
   Ipv4InterfaceContainer iface2 = ipv4.Assign (botServerDevs);
-  ipv4.NewNetwork();
+  //ipv4.NewNetwork();
     // for (int j = 0; j < NUMBER_OF_BOTS; ++j)
     // {
     //     ipv4.Assign(botDevs[j]);
@@ -163,7 +163,7 @@ int main (int argc, char *argv[])
     // }
 
   // Create a packet sink to receive packets from OnOff application
-  Address UDPSinkAddr (InetSocketAddress (iface2.GetAddress (1), UDP_SINK_PORT));
+  Address UDPSinkAddr (InetSocketAddress (iface1.GetAddress (1), UDP_SINK_PORT));
   PacketSinkHelper UDPSink ("ns3::UdpSocketFactory", InetSocketAddress (Ipv4Address::GetAny (), UDP_SINK_PORT));
   ApplicationContainer UDPSinkApp = UDPSink.Install (clientServerNodes.Get(1));
   UDPSinkApp.Start (Seconds (0.0));
@@ -218,7 +218,7 @@ int main (int argc, char *argv[])
 //     TCPSinkApp.Start(Seconds(0.0));
 //     TCPSinkApp.Stop(Seconds(MAX_SIMULATION_TIME));
     pp1.EnablePcapAll("pcap1");
-    pp2.EnablePcapAll("pcap2");
+    //pp2.EnablePcapAll("pcap2");
   Simulator::Stop (Seconds (MAX_SIMULATION_TIME));
   Simulator::Run();
   Simulator::Destroy();
