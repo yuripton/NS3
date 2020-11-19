@@ -25,7 +25,9 @@
 #include "ns3/mmwave-helper.h"
 #include "ns3/mobility-module.h"
 #include "ns3/applications-module.h"
+#include "ns3/ipv4-global-routing-helper.h"
 #include <ns3/buildings-helper.h>
+#include "ns3/netanim-module.h"
 
 //port TCP & UDP 5060/5061 --> widely used for SIP (Session Initiation Protocol)
 #define TCP_SINK_PORT 5060
@@ -95,6 +97,13 @@ int main (int argc, char *argv[])
   uemobility.SetPositionAllocator (uePositionAlloc);
   uemobility.Install (clientServerNodes.Get(0));
   
+   MobilityHelper servermobility;
+  Ptr<ListPositionAllocator> serverPositionAlloc = CreateObject<ListPositionAllocator> ();
+  serverPositionAlloc->Add (Vector (50.0, 0.0, 0.0));
+  servermobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  servermobility.SetPositionAllocator (uePositionAlloc);
+  servermobility.Install (clientServerNodes.Get(1));
+
   MobilityHelper attackermobility;
   Ptr<ListPositionAllocator> attackerPositionAlloc = CreateObject<ListPositionAllocator> ();
   attackerPositionAlloc->Add (Vector (40.0, 0.0, 0.0));
@@ -182,7 +191,7 @@ int main (int argc, char *argv[])
    attacker.SetAttribute ("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=" + OFF_TIME + "]"));
    attacker.SetAttribute ("DataRate", DataRateValue (DataRate (ATTACKER_RATE)));
    //client.SetAttribute ("PacketSize", UintegerValue (MaxPacketSize));
-   attacker.SetAttribute ("MaxBytes", UintegerValue (BULK_SEND_MAX_BYTES));
+   //attacker.SetAttribute ("MaxBytes", UintegerValue (BULK_SEND_MAX_BYTES));
    ApplicationContainer attackerApp = attacker.Install (botNodes.Get(0));
    attackerApp.Start (Seconds (ATTACKER_START));
    attackerApp.Stop(Seconds(MAX_SIMULATION_TIME));
@@ -203,7 +212,8 @@ int main (int argc, char *argv[])
     ApplicationContainer bulkSendApp = bulkSend.Install(clientServerNodes.Get(0));
     bulkSendApp.Start(Seconds(SENDER_START));
     bulkSendApp.Stop(Seconds(MAX_SIMULATION_TIME));
-
+    
+    Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 //     // UDPSink on receiver side
 //     PacketSinkHelper UDPsink("ns3::UdpSocketFactory",
 //                              Address(InetSocketAddress(Ipv4Address::GetAny(), UDP_SINK_PORT)));
@@ -217,6 +227,11 @@ int main (int argc, char *argv[])
 //     ApplicationContainer TCPSinkApp = TCPsink.Install(clientServerNodes.Get(1));
 //     TCPSinkApp.Start(Seconds(0.0));
 //     TCPSinkApp.Stop(Seconds(MAX_SIMULATION_TIME));
+    AnimationInterface anim("DDoSim.xml");
+
+    ns3::AnimationInterface::SetConstantPosition(clientServerNodes.Get(0), 30, 0);
+    ns3::AnimationInterface::SetConstantPosition(clientServerNodes.Get(1), 50, 10);
+    ns3::AnimationInterface::SetConstantPosition(botNodes.Get(0), 40, 10);
     pp1.EnablePcapAll("pcap1");
     //pp2.EnablePcapAll("pcap2");
   Simulator::Stop (Seconds (MAX_SIMULATION_TIME));
