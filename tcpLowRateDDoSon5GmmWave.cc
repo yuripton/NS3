@@ -1,20 +1,20 @@
 /* 
- * The topology used to simulate this attack contains 7 nodes as follows:
+ * The topology used to simulate this attack contains 4 nodes as follows:
  * n0 -> arini (UE legitimate User)
- * a1,a2,a3,a4 -> endro (4 UE attackers)
+ * a1 -> endro (UE attackers)
  * n1 -> enb (base station connected to yuri)
  * n2 -> yuri (receiver)
      n0
         \ pp1 
          \
-          \       
-           \            |
-            n1 ---- n2
-          ////  
-         ////    
-        ////pp2
-       ////  
-     a1a2a3a4
+          \       n1 
+           \            
+            ---- n2
+           / 
+          /   
+         /pp1
+        /
+      a1
 */
 
 #include "ns3/nstime.h"
@@ -34,16 +34,9 @@
 #define UDP_SINK_PORT 5061
 
 //Experimentation parameters
-#define BULK_SEND_MAX_BYTES 2097152
+#define BULK_SEND_MAX_BYTES 100000
 #define MAX_SIMULATION_TIME 10.0
-#define ATTACKER_START 0.0
-#define ON_TIME (std::string)"0.25"
-#define ATTACKER_RATE (std::string)"12000kb/s"
-#define BURST_PERIOD 1
-#define OFF_TIME std::to_string(BURST_PERIOD - stof(ON_TIME))
-#define SENDER_START 0.75 // Must be equal to OFF_TIME
-//Number of Bots for DDoS
-#define NUMBER_OF_BOTS 4
+#define DDOS_RATE "12000kb/s"
 
 NS_LOG_COMPONENT_DEFINE ("mmwaveTCPlowRateDDoS");
 
@@ -136,7 +129,7 @@ int main (int argc, char *argv[])
     ptr_mmWave->AttachToClosestEnb (botDevs, enbDevs.Get (0));
   
   //Define the Point-to-Point links (helpers) and their paramters
-    PointToPointHelper pp1, pp2;
+    PointToPointHelper pp1;
     pp1.SetDeviceAttribute("DataRate", StringValue("10Gbps"));
     pp1.SetChannelAttribute("Delay", StringValue("5ms"));
 
@@ -187,13 +180,13 @@ int main (int argc, char *argv[])
   // Create the OnOff applications to send TCP packets to the server
    //uint32_t MaxPacketSize = 1024; //max packet size to send in bytes
    OnOffHelper attacker ("ns3::UdpSocketFactory", UDPSinkAddr);
-   attacker.SetAttribute ("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=" + ON_TIME + "]"));
-   attacker.SetAttribute ("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=" + OFF_TIME + "]"));
-   attacker.SetAttribute ("DataRate", DataRateValue (DataRate (ATTACKER_RATE)));
+   attacker.SetAttribute ("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
+   attacker.SetAttribute ("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
+   attacker.SetAttribute ("DataRate", DataRateValue (DataRate (DDOS_RATE)));
    //client.SetAttribute ("PacketSize", UintegerValue (MaxPacketSize));
    //attacker.SetAttribute ("MaxBytes", UintegerValue (BULK_SEND_MAX_BYTES));
    ApplicationContainer attackerApp = attacker.Install (botNodes.Get(0));
-   attackerApp.Start (Seconds (ATTACKER_START));
+   attackerApp.Start (Seconds (2.0));
    attackerApp.Stop(Seconds(MAX_SIMULATION_TIME));
 
 
@@ -210,7 +203,7 @@ int main (int argc, char *argv[])
     BulkSendHelper bulkSend("ns3::TcpSocketFactory", TCPSinkAddr);
     bulkSend.SetAttribute("MaxBytes", UintegerValue(BULK_SEND_MAX_BYTES));
     ApplicationContainer bulkSendApp = bulkSend.Install(clientServerNodes.Get(0));
-    bulkSendApp.Start(Seconds(SENDER_START));
+    bulkSendApp.Start(Seconds(1.0));
     bulkSendApp.Stop(Seconds(MAX_SIMULATION_TIME));
     
     Ipv4GlobalRoutingHelper::PopulateRoutingTables();
@@ -228,7 +221,7 @@ int main (int argc, char *argv[])
 //     TCPSinkApp.Start(Seconds(0.0));
 //     TCPSinkApp.Stop(Seconds(MAX_SIMULATION_TIME));
     AnimationInterface anim("DDoSim.xml");
-
+    ns3::AnimationInterface::SetConstantPosition(enbNodes.Get(0), 0, 0);
     ns3::AnimationInterface::SetConstantPosition(clientServerNodes.Get(0), 30, 0);
     ns3::AnimationInterface::SetConstantPosition(clientServerNodes.Get(1), 50, 10);
     ns3::AnimationInterface::SetConstantPosition(botNodes.Get(0), 40, 10);
