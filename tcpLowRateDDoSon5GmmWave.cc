@@ -1,16 +1,15 @@
 /* 
- * The topology used to simulate this attack as follows:
+ * The topology used to simulate this attack contains 4 nodes as follows:
  * n0 -> arini (UE legitimate User)
  * a1 -> endro (UE attackers)
- * e1 -> enb (base station connected to yuri)
- * n1 -> gateway (router sebelum ke server tujuan)
+ * n1 -> enb (base station connected to yuri)
  * n2 -> yuri (receiver)
      n0
         \ pp1 
          \
-          \       e1 
+          \       n1 
            \            
-            n1 ---- n2
+            ---- n2
            / 
           /   
          /pp1
@@ -58,10 +57,10 @@ int main (int argc, char *argv[])
    ptr_mmWave->Initialize ();
 
   //Legitimate connection nodes 1 enB and 2 ClientServerNodes (UE)
-    NodeContainer enbNodes, clientGatewayNodes, botNodes, serverNodes;
+    NodeContainer enbNodes, clientNodes, serverNodes, botNodes;
     enbNodes.Create (1);
-    clientGatewayNodes.Create (2);
-    serverNodes.Create(1);
+    clientNodes.Create (1);
+    serverNodes.Create (1);
     botNodes.Create(1);
   // //Nodes for attacker bots
   //   NodeContainer botNodes;
@@ -90,18 +89,11 @@ int main (int argc, char *argv[])
   uePositionAlloc->Add (Vector (10.0, 0.0, 0.0));
   uemobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   uemobility.SetPositionAllocator (uePositionAlloc);
-  uemobility.Install (clientGatewayNodes.Get(0));
+  uemobility.Install (clientNodes);
   
-   MobilityHelper gatewaymobility;
-  Ptr<ListPositionAllocator> gatewayPositionAlloc = CreateObject<ListPositionAllocator> ();
-  gatewayPositionAlloc->Add (Vector (30.0, 0.0, 0.0));
-  gatewaymobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  gatewaymobility.SetPositionAllocator (gatewayPositionAlloc);
-  gatewaymobility.Install (clientGatewayNodes.Get(1));
-
-  MobilityHelper servermobility;
+   MobilityHelper servermobility;
   Ptr<ListPositionAllocator> serverPositionAlloc = CreateObject<ListPositionAllocator> ();
-  serverPositionAlloc->Add (Vector (50.0, 0.0, 0.0));
+  serverPositionAlloc->Add (Vector (30.0, 0.0, 0.0));
   servermobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   servermobility.SetPositionAllocator (serverPositionAlloc);
   servermobility.Install (serverNodes);
@@ -125,7 +117,7 @@ int main (int argc, char *argv[])
     //NetDeviceContainer botDevs[NUMBER_OF_BOTS];
 
     enbDevs = ptr_mmWave->InstallEnbDevice (enbNodes);
-    ueDevs = ptr_mmWave->InstallUeDevice (clientGatewayNodes.Get (0));
+    ueDevs = ptr_mmWave->InstallUeDevice (clientNodes);
     botDevs = ptr_mmWave->InstallUeDevice (botNodes);
     //  for (int ii = 0; ii < NUMBER_OF_BOTS; ++ii)
     // {
@@ -147,10 +139,9 @@ int main (int argc, char *argv[])
 
 
     // Install the Point-To-Point Connections between Nodes
-    NetDeviceContainer clientGatewayDevs, botGatewayDevs, gatewayServerDevs;
-    clientGatewayDevs = pp1.Install(clientGatewayNodes);
-    gatewayServerDevs = pp1.Install(clientGatewayNodes.Get(1), serverNodes.Get(0));
-    botGatewayDevs = pp2.Install(botNodes.Get(0), clientGatewayNodes.Get(1));
+    NetDeviceContainer clientServerDevs, botServerDevs;
+    clientServerDevs = pp1.Install(clientNodes.Get(0), serverNodes.Get(0));
+    botServerDevs = pp2.Install(botNodes.Get(0), serverNodes.Get(0));
 
     // for (int i = 0; i < NUMBER_OF_BOTS; ++i)
     // {
@@ -159,18 +150,16 @@ int main (int argc, char *argv[])
 
 //Use the internet stack helper and install on the ue nodes
   InternetStackHelper internet;
-  internet.Install (clientGatewayNodes);
+  internet.Install (clientNodes);
   internet.Install (serverNodes);
   internet.Install (botNodes);
   
   //Assigning IPv4 addresses onto the clien/server nodes
-  Ipv4AddressHelper ip02, ip12, ipa2;
-  ip02.SetBase ("10.10.1.0", "255.255.255.0");
-  ip12.SetBase ("10.10.2.0", "255.255.255.0");
+  Ipv4AddressHelper ip01, ipa2;
+  ip01.SetBase ("10.10.2.0", "255.255.255.0");
   ipa2.SetBase ("10.10.3.0", "255.255.255.0");
-  Ipv4InterfaceContainer iface1 = ip02.Assign (clientGatewayDevs); //client to server
-  Ipv4InterfaceContainer iface2 = ip12.Assign (gatewayServerDevs); // gateway to server
-  Ipv4InterfaceContainer iface3 = ipa2.Assign (botGatewayDevs); // attacker to server
+  Ipv4InterfaceContainer iface1 = ip01.Assign (clientServerDevs);
+  Ipv4InterfaceContainer iface2 = ipa2.Assign (botServerDevs);
   //ipv4.NewNetwork();
     // for (int j = 0; j < NUMBER_OF_BOTS; ++j)
     // {
@@ -178,14 +167,14 @@ int main (int argc, char *argv[])
     //     ipv4.NewNetwork();
     // }
 
-  //Create a packet sink to receive packets from OnOff application
-  Address UDPSinkAddr (InetSocketAddress (iface2.GetAddress (1), UDP_SINK_PORT));
+  // Create a packet sink to receive packets from OnOff application
+  Address UDPSinkAddr (InetSocketAddress (iface1.GetAddress (1), UDP_SINK_PORT));
   PacketSinkHelper UDPSink ("ns3::UdpSocketFactory", InetSocketAddress (Ipv4Address::GetAny (), UDP_SINK_PORT));
   ApplicationContainer UDPSinkApp = UDPSink.Install (serverNodes.Get(0));
   UDPSinkApp.Start (Seconds (0.0));
   UDPSinkApp.Stop(Seconds(MAX_SIMULATION_TIME));
 
-  Address TCPSinkAddr (InetSocketAddress (iface2.GetAddress (1), TCP_SINK_PORT));
+  Address TCPSinkAddr (InetSocketAddress (iface1.GetAddress (1), TCP_SINK_PORT));
   PacketSinkHelper TCPSink ("ns3::TcpSocketFactory", InetSocketAddress (Ipv4Address::GetAny (), TCP_SINK_PORT));
   ApplicationContainer TCPSinkApp = TCPSink.Install (serverNodes.Get(0));
   TCPSinkApp.Start (Seconds (0.0));
@@ -216,7 +205,7 @@ int main (int argc, char *argv[])
 //     // Sender Application (Packets generated by this application are throttled)
     BulkSendHelper bulkSend("ns3::TcpSocketFactory", TCPSinkAddr);
     bulkSend.SetAttribute("MaxBytes", UintegerValue(BULK_SEND_MAX_BYTES));
-    ApplicationContainer bulkSendApp = bulkSend.Install(clientGatewayNodes.Get(0));
+    ApplicationContainer bulkSendApp = bulkSend.Install(clientNodes.Get(0));
     bulkSendApp.Start(Seconds(0.0));
     bulkSendApp.Stop(Seconds(MAX_SIMULATION_TIME));
     
@@ -236,13 +225,11 @@ int main (int argc, char *argv[])
 //     TCPSinkApp.Stop(Seconds(MAX_SIMULATION_TIME));
     AnimationInterface anim("DDoSim.xml");
     ns3::AnimationInterface::SetConstantPosition(enbNodes.Get(0), 0, 0);
-    ns3::AnimationInterface::SetConstantPosition(clientGatewayNodes.Get(0), 10, 0);
-    ns3::AnimationInterface::SetConstantPosition(clientGatewayNodes.Get(1), 20, 10);
-    ns3::AnimationInterface::SetConstantPosition(botNodes.Get(0), 30, 30);
-    ns3::AnimationInterface::SetConstantPosition(serverNodes.Get(0), 40, 10);
+    ns3::AnimationInterface::SetConstantPosition(clientNodes.Get(0), 10, 0);
+    ns3::AnimationInterface::SetConstantPosition(serverNodes.Get(0), 30, 0);
+    ns3::AnimationInterface::SetConstantPosition(botNodes.Get(0), 20, 10);
     pp1.EnablePcapAll("pcap1");
     pp2.EnablePcapAll("pcap2");
-    //pp2.EnablePcapAll("pcap2");
   Simulator::Stop (Seconds (MAX_SIMULATION_TIME));
   Simulator::Run();
   Simulator::Destroy();
