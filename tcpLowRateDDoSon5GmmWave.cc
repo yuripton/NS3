@@ -202,7 +202,7 @@ int main (int argc, char *argv[])
   // Create the OnOff applications to send TCP packets to the server
    //uint32_t MaxPacketSize = 1024; //max packet size to send in bytes
    OnOffHelper attacker ("ns3::UdpSocketFactory", UDPSinkAddr);
-   attacker.SetAttribute ("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
+   attacker.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=" + std::to_string(simTime) + "]"));
    attacker.SetAttribute ("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
    attacker.SetAttribute ("DataRate", DataRateValue (DataRate (DDOS_RATE)));
    //client.SetAttribute ("PacketSize", UintegerValue (MaxPacketSize));
