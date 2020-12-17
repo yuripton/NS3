@@ -1,7 +1,7 @@
 /* 
  * The topology used to simulate this attack contains 4 nodes as follows:
  * n0 -> arini (UE legitimate User)
- * a1-4 -> endro (UE attackers)
+ * a1-100 -> endro (UE attackers)
  * n1 -> enb (base station connected to yuri)
  * n2 -> yuri (receiver)
      
@@ -14,7 +14,7 @@
          ////    
         ////pp2
        ////  
-     a1a2a3a4
+     a1...a100
 */
 
 #include "ns3/nstime.h"
@@ -90,20 +90,20 @@ int main (int argc, char *argv[])
   MobilityHelper enbmobility;
     //set non moving enb nodes
   Ptr<ListPositionAllocator> enbPositionAlloc = CreateObject<ListPositionAllocator> ();
-  enbPositionAlloc->Add (Vector (0.0, 0.0, 0.0));
+  enbPositionAlloc->Add (Vector (0.0, 0.0, 0.0)); //vector x , y, z
   enbmobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   enbmobility.Install (enbNodes);
     //set randomly walking ue nodes
   MobilityHelper uemobility;
   Ptr<ListPositionAllocator> uePositionAlloc = CreateObject<ListPositionAllocator> ();
-  uePositionAlloc->Add (Vector (0.0, 10.0, 10.0));
+  uePositionAlloc->Add (Vector (10.0, 10.0, 0.0)); //vector x , y, z
   uemobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   uemobility.SetPositionAllocator (uePositionAlloc);
   uemobility.Install (clientNodes);
   
   MobilityHelper servermobility;
   Ptr<ListPositionAllocator> serverPositionAlloc = CreateObject<ListPositionAllocator> ();
-  serverPositionAlloc->Add (Vector (0.0, 30.0, 10.0));
+  serverPositionAlloc->Add (Vector (30.0, 10.0, 0.0)); //vector x , y, z
   servermobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   servermobility.SetPositionAllocator (serverPositionAlloc);
   servermobility.Install (serverNodes);
@@ -117,7 +117,7 @@ int main (int argc, char *argv[])
     uint32_t a_pos = 0;
      for (int i = 0; i < bots; ++i)
     {
-        attackerPositionAlloc->Add (Vector (0.0, (double)a_pos++, 20.0));
+        attackerPositionAlloc->Add (Vector ((double)a_pos++, 20.0, 0.0)); //vector x , y, z
         attackermobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
         attackermobility.SetPositionAllocator (attackerPositionAlloc);
         attackermobility.Install (botNodes.Get(i));
@@ -254,14 +254,14 @@ int main (int argc, char *argv[])
 //     TCPSinkApp.Stop(Seconds(MAX_SIMULATION_TIME));
     AnimationInterface anim("LowRateDDoSSim.xml");
     anim.SetMaxPktsPerTraceFile(99999999999999);
-    ns3::AnimationInterface::SetConstantPosition(enbNodes.Get(0), 0, 0);
-    ns3::AnimationInterface::SetConstantPosition(clientNodes.Get(0), 10, 10);
-    ns3::AnimationInterface::SetConstantPosition(serverNodes.Get(0), 30, 10);
+    ns3::AnimationInterface::SetConstantPosition(enbNodes.Get(0), 0, 0); //vector x , y, z=0
+    ns3::AnimationInterface::SetConstantPosition(clientNodes.Get(0), 10, 10); //vector x , y, z=0
+    ns3::AnimationInterface::SetConstantPosition(serverNodes.Get(0), 30, 10); //vector x , y, z=0
     //ns3::AnimationInterface::SetConstantPosition(botNodes.Get(0), 20, 10);
     uint32_t x_pos = 0;
     for (int l = 0; l < bots; ++l)
     {
-        ns3::AnimationInterface::SetConstantPosition(botNodes.Get(l), x_pos++, 20);
+        ns3::AnimationInterface::SetConstantPosition(botNodes.Get(l), x_pos++, 20); //vector x , y, z=0
     }
 
     pp1.EnablePcapAll("pcap");
