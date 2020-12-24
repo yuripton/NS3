@@ -1,6 +1,6 @@
 /* 
  * The topology used to simulate this attack contains 4 nodes as follows:
- * n0 -> enb (base station connected to yuri)
+ * n0 -> enb (base station)
  * n1 -> arini (UE legitimate User)
  * a1-100 -> endro (UE attackers)
  * n2 -> gateway
