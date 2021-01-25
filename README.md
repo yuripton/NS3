@@ -8,4 +8,4 @@ n0 -> enb (base station)\
 n1 -> arini (UE legitimate User)\
 a1-100 -> endro (UE attackers)\
 n2 -> gateway\
-n3 -> yuri (receiver)\
+n3 -> yuri (receiver)
